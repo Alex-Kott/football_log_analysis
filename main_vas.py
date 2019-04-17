@@ -13,55 +13,48 @@ def get_color():
     return '#%02X%02X%02X' % (r(), r(), r())
 
 
-def make_graph(rates):
-    plt.rcParams['figure.figsize'] = (15, 10)
-    subplot = plt.subplot()
+df = pd.read_csv('football', sep='\t')
 
-    handles = []
+rates = defaultdict(lambda: defaultdict(int))
+words = ['чм', 'чемпионат', 'футбол', 'счёт', 'счет', 'матч', 'трансляция', 'сборная']
 
-    for word, v in rates.items():
-        ordered_dict = OrderedDict()
-        for i in sorted(v.keys()):
-            ordered_dict[i] = v[i]
+for i, row in df.iterrows():
+    print(i, flush=True, end='\r')
 
-        axis_x = ordered_dict.keys()
-        axis_y = ordered_dict.values()
+    query = row['normal_query']
+    query_dt = str(datetime.fromisoformat(row['datetime']).date())
 
-        color = get_color()
-        subplot.plot(axis_x, axis_y, c=color)
-        patch = mpatches.Patch(color=color, label=word)
-        handles.append(patch)
+    for word in words:
+        if not isinstance(query, str):
+            continue
+        if query.find(word) != -1:
+            rates[word][query_dt] += 1
 
-    plt.legend(handles=handles)
+plt.rcParams['figure.figsize'] = (15, 10)
+subplot = plt.subplot()
 
-    plt.xlabel("Запросы")
-    plt.ylabel("Время")
-    plt.title("Слова")
+handles = []
 
-    plt.savefig('pic_vas.png')
-    plt.clf()
+for word, v in rates.items():
+    ordered_dict = OrderedDict()
+    for i in sorted(v.keys()):
+        ordered_dict[i] = v[i]
 
+    axis_x = ordered_dict.keys()
+    axis_y = ordered_dict.values()
 
-def main():
-    df = pd.read_csv('log', sep='\t')
+    color = get_color()
+    subplot.plot(axis_x, axis_y, c=color)
+    patch = mpatches.Patch(color=color, label=word)
+    handles.append(patch)
 
-    rates = defaultdict(lambda: defaultdict(int))
-    words = ['чм', 'чемпионат', 'футбол', 'счёт', 'счет', 'матч', 'трансляция', 'сборная']
+plt.legend(handles=handles)
 
-    for i, row in df.iterrows():
-        print(i, flush=True, end='\r')
+plt.xlabel("Запросы")
+plt.ylabel("Время")
+plt.title("Слова")
 
-        query = row['normal_query']
-        query_dt = str(datetime.fromisoformat(row['datetime']).replace(minute=0, second=0, microsecond=0))
-
-        for word in words:
-            if not isinstance(query, str):
-                continue
-            if query.find(word) != -1:
-                rates[word][query_dt] += 1
-
-    make_graph(rates)
+plt.savefig('pic_vas.png')
+plt.clf()
 
 
-if __name__ == "__main__":
-    main()

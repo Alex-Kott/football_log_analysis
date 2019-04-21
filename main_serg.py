@@ -15,26 +15,26 @@ def get_rand_color() -> str:
 
 
 def draw_graph(rates: Dict) -> None:
-    plt.rcParams['figure.figsize'] = (35, 20)
+    plt.rcParams['figure.figsize'] = (35, 20)  # создаём заготовку
     subplot = plt.subplot()
 
-    handles = []
+    handles = []  # список обработчиков
 
-    for theme, v in rates.items():
+    for theme, v in rates.items():  # для каждой темы отдельный график
         ordered_dict = OrderedDict()
 
-        for i in sorted(v.keys()):
+        for i in sorted(v.keys()):  # сортировка по дате
             ordered_dict[i] = v[i]
 
-        axis_x = ordered_dict.keys()
+        axis_x = ordered_dict.keys()  # значения для осей X и Y
         axis_y = ordered_dict.values()
 
-        color = get_rand_color()
+        color = get_rand_color()  # берём случайный цвет для каждой темы
         subplot.plot(axis_x, axis_y, c=color)
         patch = mpatches.Patch(color=color, label=' '.join(theme))
         handles.append(patch)
 
-    plt.legend(handles=handles)
+    plt.legend(handles=handles)  # делаем легенду графика
 
     plt.xlabel("Количество запросов по теме")
     plt.ylabel("Время")
@@ -45,9 +45,9 @@ def draw_graph(rates: Dict) -> None:
 
 
 def main(log_file_name: str) -> None:
-    df = pd.read_csv(log_file_name, sep='\t')
+    df = pd.read_csv(log_file_name, sep='\t')  # читаем логи в датафрейм, использую в качестве разделителя знак табуляции
 
-    score = defaultdict(lambda: defaultdict(int))
+    score = defaultdict(lambda: defaultdict(int))  # создаём словарь для рейтинга
     themes = [  # naive implementation
         ('чм', 'чемпионат'),
         ('хостел', 'отель', 'гостиница', 'снять жильё', 'снять квартиру'),
@@ -57,7 +57,7 @@ def main(log_file_name: str) -> None:
         ('футбол', 'сборная'),
         ]
 
-    for i, row in df.iterrows():
+    for i, row in df.iterrows():  # итерируемся по логам
         query = row['normal_query']
         query_dt = str(datetime.fromisoformat(row['datetime']).date())
 
@@ -66,9 +66,8 @@ def main(log_file_name: str) -> None:
                 if not isinstance(query, str):
                     continue
                 if query.find(theme_word) != -1:
+                    score[theme][query_dt] += 1  # если хоть одно слово из темы находится в запросе -- увеличиваем рейтинг
+    draw_graph(score)  # строим график по полученным результатам
 
-                    score[theme][query_dt] += 1
-    draw_graph(score)
 
-
-main('log')
+main('log')  # вызываем основную функцию, передаём имя файла с логами
